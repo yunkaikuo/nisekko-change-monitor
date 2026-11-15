@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>二世谷植生變化監測</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+  html, body, #map { height: 100%; margin: 0; }
+  #info { position: absolute; z-index: 1000; top: 10px; left: 56px; background: #fffd;
+          padding: 8px 12px; border-radius: 6px; font: 14px/1.5 sans-serif; max-width: 280px; }
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div id="info">載入中…</div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const gsi = (layer, ext) => L.tileLayer(
+  `https://cyberjapandata.gsi.go.jp/xyz/${layer}/{z}/{x}/{y}.${ext}`,
+  { maxZoom: 18, attribution: '© <a href="https://maps.gsi.go.jp/development/ichiran.html">国土地理院</a>' });
+const photo = gsi('seamlessphoto', 'jpg'), std = gsi('std', 'png');
+const map = L.map('map', { layers: [photo] }).setView([42.86, 140.70], 11);
+
+Promise.all([fetch('data/changes.geojson').then(r => r.json()),
+             fetch('data/summary.json').then(r => r.json())]).then(([gj, s]) => {
+  const layer = L.geoJSON(gj, {
+    style: { color: '#ff3b30', weight: 1.5, fillOpacity: 0.35 },
+    onEachFeature: (f, l) => l.bindPopup(
+      `<b>斑塊 #${f.properties.id}</b><br>面積：${f.properties.area_ha} ha<br>` +
+      `NDVI：${f.properties.ndvi_before} → ${f.properties.ndvi_after}`)
+  }).addTo(map);
+  L.control.layers({ '空照圖': photo, '標準地圖': std }, { '植生損失斑塊': layer }).addTo(map);
+  document.getElementById('info').innerHTML =
+    `<b>二世谷植生變化</b><br>${s.base_year} → ${s.current_year}（7–9 月中位數）<br>` +
+    `斑塊 ${s.patches} 處，共 ${s.total_area_ha} ha<br>` +
+    `<small>衛星偵測僅為線索，需目視查證</small>`;
+}).catch(e => document.getElementById('info').textContent = '資料載入失敗：' + e);
+</script>
+</body>
+</html>
