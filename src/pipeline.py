@@ -70,7 +70,7 @@ def landcover(catalog):
               resolution=RES, resampling="mode")
     return ds["map"].max("time").compute().values
 
-def detect(before, after):
+def detect(before, after, lc):
     """植生損失：前期是植生、後期明顯下降"""
     ndvi_b, ndvi_a = before["ndvi"].values, after["ndvi"].values
     dndvi = ndvi_a - ndvi_b
