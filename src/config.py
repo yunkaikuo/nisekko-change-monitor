@@ -7,7 +7,7 @@ CRS = "EPSG:32654"
 RES = 20
 STAC_URL = "https://planetarycomputer.microsoft.com/api/stac/v1"
 SEASON = ("07-01", "09-30")
-MAX_CLOUD = 40
+MAX_CLOUD = 5
 MIN_AREA_M2 = 5000
 KEEP_CLASSES = [10, 20]  # WorldCover: 10=樹木 20=灌木
 THRESH = {"ndvi_before_min": 0.5, "ndvi_after_max": 0.35,
