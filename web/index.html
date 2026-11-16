@@ -8,7 +8,7 @@
 <style>
   html, body, #map { height: 100%; margin: 0; }
   #info { position: absolute; z-index: 1000; top: 10px; left: 56px; background: #fffd;
-          padding: 8px 12px; border-radius: 6px; font: 14px/1.5 sans-serif; max-width: 280px; }
+          padding: 8px 12px; border-radius: 6px; font: 14px/1.5 sans-serif; max-width: 300px; }
 </style>
 </head>
 <body>
@@ -26,15 +26,17 @@ Promise.all([fetch('data/changes.geojson').then(r => r.json()),
              fetch('data/summary.json').then(r => r.json())]).then(([gj, s]) => {
   const layer = L.geoJSON(gj, {
     style: { color: '#ff3b30', weight: 1.5, fillOpacity: 0.35 },
-    onEachFeature: (f, l) => l.bindPopup(
-      `<b>斑塊 #${f.properties.id}</b><br>面積：${f.properties.area_ha} ha<br>` +
-      `NDVI：${f.properties.ndvi_before} → ${f.properties.ndvi_after}`)
+    onEachFeature: (f, l) => { const p = f.properties; l.bindPopup(
+      `<b>斑塊 #${p.id}</b><br>面積：${p.area_ha} ha<br>NDVI：${p.ndvi_before} → ${p.ndvi_after}<br>` +
+      `座標：<code>${p.lon},${p.lat}</code>`); }
   }).addTo(map);
   L.control.layers({ '空照圖': photo, '標準地圖': std }, { '植生損失斑塊': layer }).addTo(map);
   document.getElementById('info').innerHTML =
     `<b>二世谷植生變化</b><br>${s.base_year} → ${s.current_year}（7–9 月中位數）<br>` +
     `斑塊 ${s.patches} 處，共 ${s.total_area_ha} ha<br>` +
-    `<small>衛星偵測僅為線索，需目視查證</small>`;
+    `<small>更新：${s.run_at.slice(0, 10)} ｜ ` +
+    `<a href="data/manifest.json" target="_blank">manifest</a> ｜ ` +
+    `<a href="data/metrics.json" target="_blank">metrics</a><br>衛星偵測僅為線索，需目視查證</small>`;
 }).catch(e => document.getElementById('info').textContent = '資料載入失敗：' + e);
 </script>
 </body>
