@@ -23,6 +23,7 @@ STAC_URL = "https://planetarycomputer.microsoft.com/api/stac/v1"
 SEASON = ("07-01", "09-30")              # 無雪季
 MAX_CLOUD = 40
 MIN_AREA_M2 = 5000                       # 0.5 ha
+KEEP_CLASSES = [10, 20]   # WorldCover: 10=樹木 20=灌木（排除 40 農田、30 草地）
 OUT = Path("web/data")
 
 
@@ -59,6 +60,15 @@ def composite(catalog, year):
     }).chunk({"time": -1}).median("time", skipna=True).compute()
     return out, len(items)
 
+def landcover(catalog):
+    """ESA WorldCover 2021，對齊到同一個網格"""
+    items = list(catalog.search(
+        collections=["esa-worldcover"], bbox=BBOX,
+        datetime="2021-01-01/2021-12-31").items())
+    print(f"WorldCover 找到 {len(items)} 個圖磚")
+    ds = load(items, bands=["map"], bbox=BBOX, crs=CRS,
+              resolution=RES, resampling="mode")
+    return ds["map"].max("time").compute().values
 
 def detect(before, after):
     """植生損失：前期是植生、後期明顯下降"""
@@ -66,6 +76,7 @@ def detect(before, after):
     dndvi = ndvi_a - ndvi_b
     dnbr = before["nbr"].values - after["nbr"].values
     mask = (ndvi_b > 0.5) & (ndvi_a < 0.35) & (dndvi < -0.3) & (dnbr > 0.2)
+    mask &= np.isin(lc, KEEP_CLASSES)
 
     x, y = after.x.values, after.y.values
     assert y[0] > y[-1], "y 軸應為由北到南"
@@ -109,7 +120,8 @@ def main():
     catalog = Client.open(STAC_URL, modifier=pc.sign_inplace)
     before, nb = composite(catalog, a.base)
     after, na = composite(catalog, a.current)
-    gdf = detect(before, after)
+    lc = landcover(catalog)   
+    gdf = detect(before, after, lc)
 
     OUT.mkdir(parents=True, exist_ok=True)
     gdf.to_file(OUT / "changes.geojson", driver="GeoJSON")
