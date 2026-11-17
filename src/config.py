@@ -1,6 +1,7 @@
 """共用設定：輕量，不依賴 odc/geopandas，讓 check 工作能快速執行。"""
 import hashlib
 import json
+from pathlib import Path
 
 BBOX = [140.39, 42.64, 141.01, 43.09]
 CRS = "EPSG:32654"
@@ -18,7 +19,6 @@ PARAMS = {"bbox": BBOX, "res": RES, "season": SEASON, "max_cloud": MAX_CLOUD,
           "min_area_m2": MIN_AREA_M2, "keep_classes": KEEP_CLASSES,
           "thresholds": THRESH}
 
-
 def search_items(catalog, year):
     return list(catalog.search(
         collections=["sentinel-2-l2a"], bbox=BBOX,
@@ -27,8 +27,13 @@ def search_items(catalog, year):
     ).items())
 
 
+def labels_hash():
+    p = Path("validation/labels.csv")
+    return hashlib.sha256(p.read_bytes()).hexdigest()[:8] if p.exists() else None
+
+
 def fingerprint(ids_by_year):
-    """輸入(影像清單 + 參數 + 版本)的指紋；相同指紋 = 結果可重現"""
     payload = {"version": PIPELINE_VERSION, "params": PARAMS,
+               "labels": labels_hash(),
                "items": {str(k): sorted(v) for k, v in ids_by_year.items()}}
     return hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()[:16]

@@ -24,8 +24,8 @@ alerts = []
 vr = min(v for v in cur["valid_ratio"].values() if v is not None)
 if vr < 0.7:
     alerts.append(f"有效像素比例偏低（{vr}），雲／雪遮罩後可用資料不足")
-if min(cur["scenes"].values()) < 5:
-    alerts.append(f"可用影像過少（{cur['scenes']}），中位數合成不穩定")
+if min(cur["dates"].values()) < 5:
+    alerts.append(f"可用觀測日過少（{cur['dates']}），中位數合成不穩定")
 if prev and prev.get("years") == cur["years"] and prev.get("patches"):
     ratio = cur["patches"] / prev["patches"]
     if ratio > 2 or ratio < 0.5:

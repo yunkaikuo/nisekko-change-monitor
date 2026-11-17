@@ -54,6 +54,7 @@ def composite(catalog, year):
     clouds = [c for c in clouds if c is not None]
     stats = {
         "scenes": len(items),
+        "dates": int(ds.sizes["time"]),
         "item_ids": [i.id for i in items],
         "cloud_mean": round(float(np.mean(clouds)), 1) if clouds else None,
         "valid_ratio": round(float(np.isfinite(out["ndvi"].values).mean()), 3),
@@ -167,6 +168,7 @@ def main():
         "run_at": now, "pipeline_version": PIPELINE_VERSION, "fingerprint": fp,
         "years": {"base": a.base, "current": a.current},
         "scenes": {"base": sb["scenes"], "current": sa["scenes"]},
+        "dates": {"base": sb["dates"], "current": sa["dates"]},
         "cloud_mean": {"base": sb["cloud_mean"], "current": sa["cloud_mean"]},
         "valid_ratio": {"base": sb["valid_ratio"], "current": sa["valid_ratio"]},
         "patches": int(len(gdf)),
