@@ -38,8 +38,8 @@ cur["alerts"] = alerts
 M.write_text(json.dumps(cur, ensure_ascii=False, indent=2))
 
 hist.append({k: cur.get(k) for k in
-             ["run_at", "years", "scenes", "patches", "total_area_ha", "validation",
-              "pipeline_version"]} | {"alerts": len(alerts)})
+             ["run_at", "fingerprint", "years", "scenes", "patches",
+              "total_area_ha", "validation", "pipeline_version"]} | {"alerts": len(alerts)})
 Path("web/data/history.json").write_text(
     json.dumps(hist[-60:], ensure_ascii=False, indent=2))
 
