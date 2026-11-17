@@ -17,7 +17,7 @@ on:
         default: false
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
   issues: write
@@ -67,6 +67,14 @@ jobs:
           curl -fsS "$SITE/data/history.json" -o prev/history.json || echo "No previous history"
       - run: python src/pipeline.py --base $BASE --current $CURRENT
       - run: python src/monitor.py
+      - name: Archive this execution log
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          FP=$(python -c "import json;print(json.load(open('web/data/manifest.json'))['fingerprint'])")
+          gh release create "run-${{ github.run_id }}" \
+            web/data/manifest.json web/data/metrics.json web/data/changes.geojson \
+            --title "run ${{ github.run_id }}" --notes "fingerprint: $FP" --prerelease
       - name: Open issue when there are alerts
         if: hashFiles('alerts.md') != ''
         env:
